@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS `cloud_config`;
 CREATE TABLE `cloud_config` (
   `key` varchar(32) NOT NULL,
-  `value` varchar(255) DEFAULT NULL,
+  `value` longtext DEFAULT NULL,
   PRIMARY KEY (`key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
