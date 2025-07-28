@@ -74,12 +74,17 @@
   sed -i "s/http:\/\/download.bt.cn\/install\/public.sh/http:\/\/www.example.com\/install\/public.sh/" $name.sh
   sed -i "s/https:\/\/download.bt.cn\/install\/public.sh/http:\/\/www.example.com\/install\/public.sh/" $name.sh
   ```
-  
+    "malicious_file_scanning": malicious_file_scanning,
+
 - install/public.sh 用官网最新版的[public.sh](http://download.bt.cn/install/public.sh)替换，并去除最下面bt_check一行
 
 - 去除无用的定时任务：task.py 文件  删除以下几行
 
   "update_software_list": update_software_list,
+  
+  "update_vulnerabilities": update_vulnerabilities,
+
+  "refresh_dockerapps": refresh_dockerapps,
 
   "check_panel_msg": check_panel_msg,
 

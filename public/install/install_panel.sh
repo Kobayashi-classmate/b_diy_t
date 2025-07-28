@@ -33,7 +33,7 @@ if [ "${UbuntuCheck}" ] && [ "${UbuntuCheck}" -lt "16" ];then
 fi
 HOSTNAME_CHECK=$(cat /etc/hostname)
 if [ -z "${HOSTNAME_CHECK}" ];then
-	echo "localhost" > /etc/hostname 
+	echo "localhost" > /etc/hostname
 	# echo "当前主机名hostname为空无法安装宝塔面板，请咨询服务器运营商设置好hostname后再重新安装"
 	# exit 1
 fi
@@ -239,7 +239,8 @@ Set_Repo_Url(){
 	if [ "${PM}"="apt-get" ];then
 		ALI_CLOUD_CHECK=$(grep Alibaba /etc/motd)
 		Tencent_Cloud=$(cat /etc/hostname |grep -E VM-[0-9]+-[0-9]+)
-		if [ "${ALI_CLOUD_CHECK}" ] || [ "${Tencent_Cloud}" ];then
+		VELINUX_CHECK=$(grep veLinux /etc/os-release)
+		if [ "${ALI_CLOUD_CHECK}" ] || [ "${Tencent_Cloud}" ] || [ "${VELINUX_CHECK}" ];then
 			return
 		fi
 
@@ -1057,7 +1058,7 @@ Install_Bt(){
 	echo "${panelPort}" > ${setup_path}/server/panel/data/port.pl
 	wget -O /etc/init.d/bt ${download_Url}/install/src/bt7.init -T 15
 	wget -O /www/server/panel/init.sh ${download_Url}/install/src/bt7.init -T 15
-	wget -O /www/server/panel/data/softList.conf ${download_Url}/install/conf/softList.conf
+	wget -O /www/server/panel/data/softList.conf ${download_Url}/install/conf/softListtls10.conf
 
 	rm -f /www/server/panel/class/*.so
 	if [ ! -f /www/server/panel/data/not_workorder.pl ]; then
@@ -1160,20 +1161,6 @@ Set_Bt_Panel(){
 		Red_Error "ERROR: The BT-Panel service startup failed." "ERROR: 宝塔启动失败"
 	fi
 
-	echo "================================================================================"
-    echo "正在等待dpkg frontend lock文件解锁"
-    echo "等待时间：30s"
-    echo "等待时间结束后，不论文件是否解锁，都将会尝试进行安装防火墙相关内容！"
-    echo "================================================================================"	
-	sleep 30
-	echo "================================================================================"
-	echo "开始尝试安装防火墙相关内容..."
-	echo ""
-	echo "E: Unable to acquire the dpkg frontend lock..."
-	echo "注意事项：如下方出现上述相似报错内容，请再运行一遍本安装命令"
-    echo "================================================================================"
-	sleep 3
-
 	if [ "$PANEL_USER" ];then
 		cd ${setup_path}/server/panel/
 		btpython -c 'import tools;tools.set_panel_username("'$PANEL_USER'")'
@@ -1246,7 +1233,40 @@ Set_Firewall(){
 }
 Get_Ip_Address(){
 	getIpAddress=""
-	getIpAddress=$(curl -sS --connect-timeout 10 -m 60 https://www.bt.cn/Api/getIpAddress)
+	#getIpAddress=$(curl -sS --connect-timeout 10 -m 60 https://www.bt.cn/Api/getIpAddress)
+
+	ipv4_address=""
+	ipv6_address=""
+
+	ipv4_address=$(curl -4 -sS --connect-timeout 4 -m 5 https://api.bt.cn/Api/getIpAddress 2>&1)
+	if [ -z "${ipv4_address}" ];then
+			ipv4_address=$(curl -4 -sS --connect-timeout 4 -m 5 https://www.bt.cn/Api/getIpAddress 2>&1)
+			if [ -z "${ipv4_address}" ];then
+					ipv4_address=$(curl -4 -sS --connect-timeout 4 -m 5 https://www.aapanel.com/api/common/getClientIP 2>&1)
+			fi
+	fi
+	IPV4_REGEX="^([0-9]{1,3}\.){3}[0-9]{1,3}$"
+	if ! [[ $ipv4_address =~ $IPV4_REGEX ]]; then
+			ipv4_address=""
+	fi
+
+	ipv6_address=$(curl -6 -sS --connect-timeout 4 -m 5 https://www.bt.cn/Api/getIpAddress 2>&1)
+	IPV6_REGEX="^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$"
+	if ! [[ $ipv6_address =~ $IPV6_REGEX ]]; then
+			ipv6_address=""
+	else
+			if [[ ! $ipv6_address =~ ^\[ ]]; then
+					ipv6_address="[$ipv6_address]"
+			fi
+	fi
+
+	if [ "${ipv4_address}" ];then
+		getIpAddress=$ipv4_address
+	elif [ "${ipv6_address}" ];then
+		getIpAddress=$ipv6_address
+	fi
+
+
 	if [ -z "${getIpAddress}" ] || [ "${getIpAddress}" = "0.0.0.0" ]; then
 		isHosts=$(cat /etc/hosts|grep 'www.bt.cn')
 		if [ -z "${isHosts}" ];then
@@ -1425,8 +1445,16 @@ echo -e "\033[32mCongratulations! Installed successfully!\033[0m"
 echo -e "========================面板账户登录信息=========================="
 echo -e ""
 echo -e " 【云服务器】请在安全组放行 $panelPort 端口"
-echo -e " 外网面板地址: ${HTTP_S}://${getIpAddress}:${panelPort}${auth_path}"
-echo -e " 内网面板地址: ${HTTP_S}://${LOCAL_IP}:${panelPort}${auth_path}"
+if [ -z "${ipv4_address}" ] && [ -z "${ipv6_address}" ];then
+    echo -e " 外网面板地址:      ${HTTP_S}://SERVER_IP:${panelPort}${auth_path}"
+fi
+if [ "${ipv4_address}" ];then
+    echo -e " 外网ipv4面板地址: ${HTTP_S}://${ipv4_address}:${panelPort}${auth_path}"
+fi
+if [ "${ipv6_address}" ];then
+    echo -e " 外网ipv6面板地址: ${HTTP_S}://${ipv6_address}:${panelPort}${auth_path}"
+fi
+echo -e " 内网面板地址:     ${HTTP_S}://${LOCAL_IP}:${panelPort}${auth_path}"
 echo -e " username: $username"
 echo -e " password: $password"
 echo -e ""
