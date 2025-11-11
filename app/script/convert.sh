@@ -1,9 +1,9 @@
 #!/bin/bash
 
-Linux_Version="11.0.0"
+Linux_Version="11.2.0"
 Windows_Version="8.2.2"
-Aapanel_Version="7.0.21"
-Btm_Version="2.3.0"
+Aapanel_Version="7.0.25"
+Btm_Version="2.3.3"
 
 FILES=(
 public/install/src/panel6.zip
@@ -23,7 +23,6 @@ public/install/update/LinuxPanel_EN-${Aapanel_Version}.zip
 public/install/install_7.0_en.sh
 public/install/update_7.x_en.sh
 )
-
 PL_FILE="public/install/update/LinuxPanel-${Linux_Version}.pl"
 
 DIR=$1

@@ -261,7 +261,7 @@ Set_Repo_Url(){
 		NODE_STATUS=$(echo ${NODE_CHECK}|awk '{print $1}')
 		TIME_TOTAL=$(echo ${NODE_CHECK}|awk '{print $2 * 1000}'|cut -d '.' -f 1)
 
-		if { [ "${NODE_STATUS}" != "200" ] && [ "${NODE_STATUS}" != "301" ]; } || [ "${TIME_TOTAL}" -ge "150" ] || [ "${SOURCE_URL_CHECK}" ]; then
+		if { [ "${NODE_STATUS}" != "200" ] && [ "${NODE_STATUS}" != "301" ]; } || [ "${TIME_TOTAL}" -ge "300" ] || [ "${SOURCE_URL_CHECK}" ]; then
 			\cp -rpa /etc/apt/sources.list /etc/apt/sources.list.btbackup
 			apt_lists=(mirrors.cloud.tencent.com  mirrors.163.com repo.huaweicloud.com mirrors.tuna.tsinghua.edu.cn mirrors.aliyun.com mirrors.ustc.edu.cn )
 			for list in ${apt_lists[@]};
@@ -316,6 +316,21 @@ Auto_Swap()
 	echo "$swapFile    swap    swap    defaults    0 0" >> /etc/fstab
 	swap=`free |grep Swap|awk '{print $2}'`
 	if [ $swap -gt 1 ];then
+		KERNEL_MAJOR_VERSION=$(uname -r | cut -d '-' -f1 | awk -F. '{print $1}')
+		KERNEL_MINOR_VERSION=$(uname -r | cut -d '-' -f1 | awk -F. '{print $2}')
+		if [ -f "/etc/sysctl.conf" ]; then
+			sed -i "/vm.swappiness/d" /etc/sysctl.conf
+		fi
+		if [ "$KERNEL_MAJOR_VERSION" -lt 3 ]; then
+			sysctl -w vm.swappiness=1
+			echo "vm.swappiness=1" >> /etc/sysctl.conf
+		elif [ "$KERNEL_MAJOR_VERSION" = "3" ] && [ "$KERNEL_MINOR_VERSION" -lt 5 ]; then
+			sysctl -w vm.swappiness=1
+			echo "vm.swappiness=1" >> /etc/sysctl.conf
+		else
+			sysctl -w vm.swappiness=0
+			echo "vm.swappiness=0" >> /etc/sysctl.conf
+		fi
 		echo "Swap total sizse: $swap";
 		return;
 	fi
@@ -459,6 +474,13 @@ get_node_url(){
 		CN_CHECK=$(curl -sS --connect-timeout 10 -m 10 https://api.bt.cn/api/isCN)
 		if [ "${CN_CHECK}" == "True" ];then
 			nodes=(https://dg2.bt.cn https://download.bt.cn https://ctcc1-node.bt.cn https://cmcc1-node.bt.cn https://ctcc2-node.bt.cn https://hk1-node.bt.cn);
+		else
+			PING6_CHECK=$(ping6 -c 2 -W 2 download.bt.cn &> /dev/null && echo "yes" || echo "no")
+			if [ "${PING6_CHECK}" == "yes" ];then
+				nodes=(https://dg2.bt.cn https://download.bt.cn https://cf1-node.aapanel.com);
+			else
+				nodes=(https://cf1-node.aapanel.com https://download.bt.cn https://na1-node.bt.cn https://jp1-node.bt.cn https://dg2.bt.cn);
+			fi
 		fi
 	fi
 
@@ -474,7 +496,11 @@ get_node_url(){
 	touch $tmp_file2
 	for node in ${nodes[@]};
 	do
-		NODE_CHECK=$(curl --connect-timeout 3 -m 3 2>/dev/null -w "%{http_code} %{time_total}" ${node}/net_test|xargs)
+		if [ "${node}" == "https://cf1-node.aapanel.com" ];then
+			NODE_CHECK=$(curl --connect-timeout 3 -m 3 2>/dev/null -w "%{http_code} %{time_total}" ${node}/1net_test|xargs)
+		else
+			NODE_CHECK=$(curl --connect-timeout 3 -m 3 2>/dev/null -w "%{http_code} %{time_total}" ${node}/net_test|xargs)
+		fi
 		RES=$(echo ${NODE_CHECK}|awk '{print $1}')
 		NODE_STATUS=$(echo ${NODE_CHECK}|awk '{print $2}')
 		TIME_TOTAL=$(echo ${NODE_CHECK}|awk '{print $3 * 1000 - 500 }'|cut -d '.' -f 1)
@@ -569,7 +595,7 @@ Install_RPM_Pack(){
 	
 	#尝试同步时间(从bt.cn)
 	echo 'Synchronizing system time...'
-	getBtTime=$(curl -sS --connect-timeout 3 -m 60 http://www.bt.cn/api/index/get_time)
+	getBtTime=$(curl -sS --connect-timeout 3 -m 60 https://www.bt.cn/api/index/get_time)
 	if [ "${getBtTime}" ];then	
 		date -s "$(date -d @$getBtTime +"%Y-%m-%d %H:%M:%S")"
 	fi
@@ -588,7 +614,7 @@ Install_RPM_Pack(){
 
 	sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
 	#yum remove -y python-requests python3-requests python-greenlet python3-greenlet
-	yumPacks="libcurl-devel wget tar gcc make zip unzip openssl openssl-devel gcc libxml2 libxml2-devel libxslt* zlib zlib-devel libjpeg-devel libpng-devel libwebp libwebp-devel freetype freetype-devel lsof pcre pcre-devel vixie-cron crontabs icu libicu-devel c-ares libffi-devel bzip2-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel qrencode at mariadb rsyslog net-tools"
+	yumPacks="libcurl-devel wget tar gcc make zip unzip openssl openssl-devel gcc libxml2 libxml2-devel libxslt* zlib zlib-devel libjpeg-devel libpng-devel libwebp libwebp-devel freetype freetype-devel lsof pcre pcre-devel vixie-cron crontabs icu libicu-devel c-ares libffi-devel bzip2-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel qrencode at mariadb rsyslog net-tools firewalld"
 	yum install -y ${yumPacks}
 
 	for yumPack in ${yumPacks}
@@ -650,7 +676,7 @@ Install_Deb_Pack(){
 		apt-get install curl -y
 	fi
 
-	debPacks="wget curl libcurl4-openssl-dev gcc make zip unzip tar openssl libssl-dev gcc libxml2 libxml2-dev zlib1g zlib1g-dev libjpeg-dev libpng-dev lsof libpcre3 libpcre3-dev cron net-tools swig build-essential libffi-dev libbz2-dev libncurses-dev libsqlite3-dev libreadline-dev tk-dev libgdbm-dev libdb-dev libdb++-dev libpcap-dev xz-utils git qrencode sqlite3 at mariadb-client rsyslog net-tools";
+	debPacks="wget curl libcurl4-openssl-dev gcc make zip unzip tar openssl libssl-dev gcc libxml2 libxml2-dev zlib1g zlib1g-dev libjpeg-dev libpng-dev lsof libpcre3 libpcre3-dev cron net-tools swig build-essential libffi-dev libbz2-dev libncurses-dev libsqlite3-dev libreadline-dev tk-dev libgdbm-dev libdb-dev libdb++-dev libpcap-dev xz-utils git qrencode sqlite3 at mariadb-client rsyslog net-tools ufw";
 	apt-get install -y $debPacks --force-yes
 
 	for debPack in ${debPacks}
@@ -693,6 +719,10 @@ Get_Versions(){
 		elif { [ "${ID}" == "almalinux" ] || [ "${ID}" == "centos" ] || [ "${ID}" == "rocky" ]; } && [[ "${OS_V}" =~ ^(9)$ ]]; then
 			os_type="el"
 			os_version="9"
+			pyenv_tt="true"
+		elif [ "${ID}" == "alinux" ] && [[ "${OS_V}" =~ ^(4)$ ]];then
+			os_type="alinux"
+			os_version="4"
 			pyenv_tt="true"
 		fi
 		if [ "${pyenv_tt}" ];then
@@ -764,6 +794,15 @@ Get_Versions(){
 	fi
 }
 Install_Python_Lib(){
+
+
+	if [ -f "/www/server/panel/pyenv/bin/python3.7" ];then
+		python_file_date=$(date -r /www/server/panel/pyenv/bin/python3.7  +"%Y")
+		if [ "${python_file_date}" -lt "2021" ];then
+			rm -rf /www/server/panel/pyenv
+		fi
+	fi
+	
 	curl -Ss --connect-timeout 3 -m 60 $download_Url/install/pip_select.sh|bash
 	pyenv_path="/www/server/panel"
 	if [ -f $pyenv_path/pyenv/bin/python ];then
@@ -1058,8 +1097,13 @@ Install_Bt(){
 	echo "${panelPort}" > ${setup_path}/server/panel/data/port.pl
 	wget -O /etc/init.d/bt ${download_Url}/install/src/bt7.init -T 15
 	wget -O /www/server/panel/init.sh ${download_Url}/install/src/bt7.init -T 15
-	wget -O /www/server/panel/data/softList.conf ${download_Url}/install/conf/softListtls10.conf
+	if [ -f "/www/server/panel/config/default_soft_list.conf" ];then
+		\cp -rpa /www/server/panel/config/default_soft_list.conf /www/server/panel/data/softList.conf
+	else
+		wget -O /www/server/panel/data/softList.conf ${download_Url}/install/conf/softListtls10.conf
+	fi
 
+	rm -rf /www/server/panel/plugin/webssh/
 	rm -f /www/server/panel/class/*.so
 	if [ ! -f /www/server/panel/data/not_workorder.pl ]; then
 		echo "True" > /www/server/panel/data/not_workorder.pl
@@ -1145,8 +1189,12 @@ Set_Bt_Panel(){
     	echo "证书开启成功！"
     	echo "========================================"
     fi
+# 	btpip install Flask-SQLAlchemy==2.5.1 SQLAlchemy==1.3.24
 	/etc/init.d/bt stop
 	sleep 5
+	if [ ! -f "/www/server/panel/data/port.pl" ];then
+		echo "8888" > /www/server/panel/data/port.pl
+	fi
 	/etc/init.d/bt start 	
 	sleep 5
 	isStart=$(ps aux |grep 'BT-Panel'|grep -v grep|awk '{print $2}')
@@ -1173,7 +1221,7 @@ Set_Bt_Panel(){
 Set_Firewall(){
 	sshPort=$(cat /etc/ssh/sshd_config | grep 'Port '|awk '{print $2}')
 	if [ "${PM}" = "apt-get" ]; then
-		apt-get install -y ufw
+		#apt-get install -y ufw
 		if [ -f "/usr/sbin/ufw" ];then
 			ufw allow 20/tcp
 			ufw allow 21/tcp
@@ -1213,7 +1261,7 @@ Set_Firewall(){
 		else
 			AliyunCheck=$(cat /etc/redhat-release|grep "Aliyun Linux")
 			[ "${AliyunCheck}" ] && return
-			yum install firewalld -y
+			#yum install firewalld -y
 			[ "${Centos8Check}" ] && yum reinstall python3-six -y
 			systemctl enable firewalld
 			systemctl start firewalld
@@ -1438,6 +1486,12 @@ if [ "${PANEL_SSL}" == "True" ];then
 else
 	HTTP_S="http"
 fi 
+
+echo "安装基础网站流量统计程序..."
+wget -O site_new_total.sh ${download_Url}/site_total/install.sh &> /dev/null 
+bash site_new_total.sh &> /dev/null
+rm -f site_new_total.sh
+echo "安装基础网站流量统计程序完成"
 
 echo > /www/server/panel/data/bind.pl
 echo -e "=================================================================="

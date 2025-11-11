@@ -328,6 +328,49 @@ class Api extends BaseController
         return json(['status'=>true,'err_no'=>0,'msg'=>'获取成功','data'=>$data]);
     }
 
+    //宝塔云控版本信息
+    public function cloudc_version_info(){
+        return json(['status'=>true,'msg'=>'获取成功','data'=>[
+            'version' => '1.0.5',
+            'download' => '',
+            'uptime' => '2025/06/16',
+            'upmsg' => '暂无更新日志'
+        ]]);
+    }
+
+    //宝塔云控版本信息
+    public function cloudc_get_version(){
+        return json(['status'=>true,'msg'=>'','oid'=>'','data'=>[
+            'officialVersion' => [
+                'version' => '1.0.5',
+                'download' => '',
+                'uptime' => '2025/06/16',
+                'updateMsg' => '暂无更新日志'
+            ],
+        ]]);
+    }
+
+    //宝塔云控授权信息
+    public function cloudc_order_status(){
+        $data = [
+            'status' => true,
+            'msg' => '获取成功',
+            'oid' => '',
+            'data' => [
+                'id' => 1,
+                'address' => real_ip(),
+                'buytime' => time(),
+                'endtime' => time() + 86400 * 3650,
+                'num' => 9999,
+                'max_num' => 9999,
+                'pid' => 100000023,
+                'renew_price' => 0,
+                'state' => 1,
+            ]
+        ];
+        return json($data);
+    }
+
     //获取内测版更新日志
     public function get_beta_logs(){
         return json(['beta_ps'=>'当前暂无内测版', 'list'=>[]]);
@@ -465,6 +508,40 @@ class Api extends BaseController
     public function get_ssl_list(){
         $data = bin2hex('[]');
         return json(['status'=>true, 'msg'=>'', 'data'=>$data]);
+    }
+    
+    //获取堡塔云WAF恶意IP库
+    public function get_malicious_ip_list()
+    {
+        $cacheKey = 'malicious_ip_list';
+    
+        // 尝试从缓存获取
+        if (Cache::has($cacheKey)) {
+            return json(json_decode(Cache::get($cacheKey), true));
+        }
+        $url = 'https://api.bt.cn/bt_waf/get_malicious_ip';
+        $postData = json_encode([
+            'x_bt_token' => 'MzI3YjAzOGQ3Yjk3NjUxYjVlMDkyMGFm'
+        ]);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($postData)
+        ]);
+
+        $response = curl_exec($ch);
+        if (curl_errno($ch)) {
+            return json(['status'=>true, 'msg'=>'', 'data'=>bin2hex('[]')]);
+        }
+        curl_close($ch);
+        Cache::set($cacheKey, $response, 86400); //缓存一天
+
+        return json(json_decode($response, true));
     }
 
     public function return_success(){

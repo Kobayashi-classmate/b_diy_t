@@ -237,6 +237,13 @@ fi
 echo "修复面板依赖完成！"
 echo "==========================================="
 
+echo "安装基础网站流量统计程序..."
+wget -O site_new_total.sh ${download_Url}/site_total/install.sh &> /dev/null 
+bash site_new_total.sh &> /dev/null
+rm -f site_new_total.sh
+echo "安装基础网站流量统计程序完成"
+
+
 RE_UPDATE=$(cat /www/server/panel/data/db/update)
 if [ "$RE_UPDATE" -ge "4" ];then
     echo "2" > /www/server/panel/data/db/update
@@ -274,6 +281,7 @@ echo "==========================================="
 echo "正在更新面板文件..............."
 sleep 1
 echo "更新完成！"
+echo "如在终端中执行此命令，请手动刷新面板页面"
 echo "==========================================="
 
 chattr -i /etc/init.d/bt
