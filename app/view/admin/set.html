@@ -170,19 +170,19 @@ name="main"}
           class="form"
           role="form"
         >
-		<div class="form-group">
-		  <label>是否展示配置：</label>
-		  <select
-			class="form-control"
-			name="aaPanel_show"
-			default="{:config_get('aaPanel_show')}"
-		  >
-			<option value="0">关闭</option>
-			<option value="1">开启</option>
-		  </select>
-		  <font color="green">关闭后安装脚本页面将不展示脚本相关命令 </font>
-		</div>
-		{if config_get('aaPanel_show')==1}
+          <div class="form-group">
+            <label>是否展示配置：</label>
+            <select
+              class="form-control"
+              name="aaPanel_show"
+              default="{:config_get('aaPanel_show')}"
+            >
+              <option value="0">关闭</option>
+              <option value="1">开启</option>
+            </select>
+            <font color="green">关闭后安装脚本页面将不展示脚本相关命令 </font>
+          </div>
+          {if config_get('aaPanel_show')==1}
           <div class="form-group">
             <label>宝塔Linux面板最新版本号：</label>
             <input
@@ -217,7 +217,7 @@ name="main"}
             />
             <font color="green">用于检测更新接口返回</font>
           </div>
-		  {/if}
+          {/if}
           <div class="form-group text-center">
             <input
               type="submit"
@@ -493,8 +493,10 @@ name="main"}
               以下宝塔面板请使用官方最新脚本安装并绑定账号，用于获取插件列表及插件包
             </p>
             <p>
-              <a href="/static/file/win/kaixin.zip">下载专用插件(Win)</a
-              >，在面板【软件商店】->【第三方应用】，点击【导入插件】，导入该专用插件。
+              先在面板软件商店，安装“堡塔面板静态文件加速”插件，然后<a
+                href="/static/file/win/static_cdn.zip"
+                >下载专用插件(Win)</a
+              >，上传到 /BtSoft/panel/plugin/ 解压。
             </p>
             <div class="form-group">
               <label>宝塔面板URL：</label><br />
@@ -1061,7 +1063,7 @@ name="main"}
                   layer.alert("第三方云端URL不正确");
                   return;
                 }
-                var postdata = { bt_type: bt_type, bt_surl: bt_surl };
+                var postdata = {os:'linux', bt_type:bt_type, bt_url:bt_url, bt_key:bt_key};
               } else {
                 var bt_url = $("input[name=bt_url]").val();
                 var bt_key = $("input[name=bt_key]").val();
@@ -1081,6 +1083,7 @@ name="main"}
                   return;
                 }
                 var postdata = {
+                  os:'linux'
                   bt_type: bt_type,
                   bt_url: bt_url,
                   bt_key: bt_key,
@@ -1141,6 +1144,7 @@ name="main"}
                   return;
                 }
                 var postdata = {
+                  os:'linux',
                   bt_type: wbt_type,
                   bt_url: wbt_url,
                   bt_key: wbt_key,
@@ -1201,6 +1205,7 @@ name="main"}
                   return;
                 }
                 var postdata = {
+                  os:'en',
                   bt_type: enbt_type,
                   bt_url: enbt_url,
                   bt_key: enbt_key,

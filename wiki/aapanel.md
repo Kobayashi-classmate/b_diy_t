@@ -14,7 +14,7 @@
 
   php think decrypt classdir <面板class_v2文件夹路径>
 
-- 全局搜索替换 https://wafapi2.aapanel.com => http://www.example.com（需排除task.py、ipsModel.py、js文件）
+- 全局搜索替换 https://wafapi2.aapanel.com => http://www.example.com（需排除task.py、ipsModel.py、js文件），https://wafapi.aapanel.com => http://www.example.com
 
 - 全局搜索替换 https://node.aapanel.com/install/update_7.x_en.sh => http://www.example.com/install/update_7.x_en.sh
 
@@ -22,13 +22,19 @@
 
 - 搜索并删除提交异常报告的代码 bt_error/index.php
 
-- class/ajax.py 文件 \#是否执行升级程序 下面的 public.get_url() 改成 public.OfficialApiBase()
+- class/ajax.py、class_v2/ajax_v2.py 文件：
 
-  class/ajax.py 文件 __official_url = 'https://www.aapanel.com' 改成 http://www.example.com
+  \#是否执行升级程序 下面的 public.get_url() 改成 public.OfficialApiBase()
 
-  class/jobs.py 文件 \#尝试升级到独立环境 下面的 public.get_url() 改成 public.OfficialApiBase()
+  __official_url = 'https://www.aapanel.com' 改成 http://www.example.com
 
-  class/system.py 文件 RepPanel和UpdatePro方法内的 public.get_url() 改成 public.OfficialApiBase()
+  class/jobs.py、class_v2/jobs_v2.py 文件：
+
+  \#尝试升级到独立环境 下面的 public.get_url() 改成 public.OfficialApiBase()
+
+  class/system.py、class_v2/system_v2.py 文件：
+
+  RepPanel和UpdatePro方法内的 public.get_url() 改成 public.OfficialApiBase()
 
 - class/public/common.py
 
@@ -52,18 +58,11 @@
 
   在 def write_request_log(reques=None): 这一行下面加上 return
 
-- class/panelPlugin.py 文件，set_pyenv方法内，temp_file = public.readFile(filename)这行代码下面加上
+- class/panelPlugin.py、class_v2/panel_plugin_v2.py 文件，set_pyenv方法内，temp_file = public.readFile(filename)这行代码下面加上
 
   ```python
   temp_file = temp_file.replace('http://download.bt.cn/install/public.sh', 'http://www.example.com/install/public.sh')
   temp_file = temp_file.replace('https://download.bt.cn/install/public.sh', 'http://www.example.com/install/public.sh')
-  ```
-  
-  def check_status(self, softInfo): 方法最后一行加上
-  
-  ```python
-  if 'endtime' in softInfo:
-              softInfo['endtime'] = time.time() + 86400 * 3650
   ```
   
 - class_v2/btdockerModelV2/flush_plugin.py 文件，删除clear_hosts()一行
@@ -74,17 +73,16 @@
   sed -i "s/http:\/\/download.bt.cn\/install\/public.sh/http:\/\/www.example.com\/install\/public.sh/" $name.sh
   sed -i "s/https:\/\/download.bt.cn\/install\/public.sh/http:\/\/www.example.com\/install\/public.sh/" $name.sh
   ```
-    "malicious_file_scanning": malicious_file_scanning,
-
+  
 - install/public.sh 用官网最新版的[public.sh](http://download.bt.cn/install/public.sh)替换，并去除最下面bt_check一行
 
 - 去除无用的定时任务：task.py 文件  删除以下几行
 
-  "update_software_list": update_software_list,
-  
-  "update_vulnerabilities": update_vulnerabilities,
+  "check_site_monitor": check_site_monitor,
 
-  "refresh_dockerapps": refresh_dockerapps,
+  "update_software_list": update_software_list,
+
+  "malicious_file_scanning": malicious_file_scanning,
 
   "check_panel_msg": check_panel_msg,
 
@@ -92,15 +90,19 @@
 
   "count_ssh_logs": count_ssh_logs,
 
+  "update_vulnerabilities": update_vulnerabilities,
+
+  "refresh_dockerapps": refresh_dockerapps,
+
   "submit_email_statistics": submit_email_statistics,
 
   "submit_module_call_statistics": submit_module_call_statistics,
 
-  "mailsys_domain_restrictions": mailsys_domain_restrictions,
+  "mailsys_domain_blecklisted_alarm": mailsys_domain_blecklisted_alarm,
 
 - [可选]去除各种计算题：将bt.js里面的内容复制到 BTPanel/static/vite/oldjs/public_backup.js 末尾
 
-- [可选]去除创建网站自动创建的垃圾文件：在class/panelSite.py，分别删除
+- [可选]去除创建网站自动创建的垃圾文件：在class/panelSite.py、class_v2/panel_site_v2.py，分别删除
 
   htaccess = self.sitePath + '/.htaccess'
 
@@ -110,7 +112,7 @@
 
   这3行及分别接下来的4行代码
 
-- [可选]关闭未绑定域名提示页面：在class/panelSite.py，root /www/server/nginx/html改成return 400
+- [可选]关闭未绑定域名提示页面：在class/panelSite.py、class_v2/panel_site_v2.py，root /www/server/nginx/html改成return 400
 
 - [可选]上传文件默认选中覆盖，在BTPanel/static/vite/oldjs/upload-drog.js，id="all_operation"加checked属性
 

@@ -14,7 +14,7 @@
 
 - 全局搜索替换 https://api.bt.cn => http://www.example.com
 
-- 全局搜索替换 https://www.bt.cn/api/ => http://www.example.com/api/（需排除clearModel.py、scanningModel.py、ipsModel.py、js文件）
+- 全局搜索替换 https://www.bt.cn/api/ => http://www.example.com/api/（需排除clearModel.py、scanningModel.py、ipsModel.py、domainMod.py、js文件）
 
 - 全局搜索替换 http://www.bt.cn/api/ => http://www.example.com/api/（需排除js文件）
 
@@ -96,6 +96,8 @@
 
 - script/local_fix.sh 文件，${D_NODE_URL}替换成www.example.com
 
+- script/upgrade_panel_optimized.py 文件，def get_home_node(url): 下面加上return url
+
 - tools.py 文件，u_input == 16下面的public.get_url()替换成public.GetConfigValue('home')
 
 - install/install_soft.sh 在. 执行之前加入以下代码
@@ -109,25 +111,17 @@
 
 - 去除无用的定时任务：task.py 文件  删除以下几行
 
-  "check_panel_msg": self.check_panel_msg,
+  check_panel_msg,
 
-  "update_software_list": self.update_software_list,
+  refresh_domain_cache,
 
-  PluginLoader.daemon_panel()
+  task_ssh_error_count,
 
-  check_node_status()
-
-  self.upload_send_num()
-
-- script/site_task.py 删除flush_ssh_log()
-
-- [可选]去除各种计算题：复制bt.js到 BTPanel/static/ ，在 BTPanel/templates/default/layout.html 的\</body\>前面加入
+- [可选]去除各种计算题：复制bt.js到 BTPanel/static/ ，在 BTPanel/templates/default/software.html 的 \<script\>window.vite_public_request_token 前面加入
 
   ```javascript
   <script src="/static/bt.js"></script>
   ```
-
-  在 BTPanel/templates/default/software.html 的 \<script\>window.vite_public_request_token 前面加入
 
 - [可选]去除创建网站自动创建的垃圾文件：在class/panelSite.py，分别删除
 
@@ -138,6 +132,8 @@
   doc404 = self.sitePath + '/404.html'
 
   这3行及分别接下来的4行代码
+
+  def get_view_title_content(self, get): 下面加上 return public.returnMsg(True, '')
 
 - [可选]关闭未绑定域名提示页面：在class/panelSite.py，root /www/server/nginx/html改成return 400
 
