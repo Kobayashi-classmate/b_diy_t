@@ -1,464 +1,675 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <meta name="renderer" content="webkit" />
-    <meta name="force-rendering" content="webkit" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>宝塔面板安装脚本</title>
-    <link rel="stylesheet" type="text/css" href="/static/css/sanren.css" />
-    <link rel="stylesheet" type="text/css" href="/static/css/style.css" />
-    <link rel="stylesheet" type="text/css" href="/static/css/download.css" />
-    <style type="text/css">
-      .btcode pre {
-        background: #e6e9ed;
-        border-left: 5px solid #20a53a;
-        color: #222;
-        font: 12px/20px Consolas, "Courier New", Courier, monospace;
-        margin: 10px 0 25px;
-        overflow: hidden;
-        overflow-wrap: break-word;
-        padding-left: 15px;
-        min-height: 40px;
+    <title>宝塔面板命令大全 & 安装脚本</title>
+    <style>
+      /* --- 全局重置与基础样式 --- */
+      :root {
+        --primary-color: #20a53a;
+        --primary-hover: #188f2f;
+        --bg-color: #f4f6f9;
+        --code-bg: #2d2d2d;
+        --text-main: #333;
+        --text-secondary: #666;
+        --border-color: #e1e4e8;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        line-height: 1.6;
+        padding-bottom: 50px;
+      }
+      a {
+        text-decoration: none;
+        color: var(--primary-color);
+        transition: color 0.2s;
+      }
+      a:hover {
+        color: var(--primary-hover);
+      }
+      ul {
+        list-style: none;
+      }
+
+      /* --- 布局容器 --- */
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
         display: flex;
-        flex-direction: column;
-        justify-content: center;
-        white-space: pre-wrap;
+        flex-direction: row;
+        gap: 20px;
+        position: relative;
       }
-      .code-title {
-        border: 1px solid #ddd;
-        position: fixed;
-        right: 20px;
-        top: 340px;
-        border-radius: 4px;
+
+      /* --- 侧边导航 (左侧固定) --- */
+      .sidebar {
+        width: 250px;
+        flex-shrink: 0;
       }
-      .code-title h3 {
-        padding: 0 15px;
+      .nav-card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        position: sticky;
+        top: 20px;
+        overflow: hidden;
+      }
+      .nav-header {
+        background: #f9fafc;
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border-color);
+        font-weight: bold;
+        font-size: 16px;
+      }
+      .nav-list a {
+        display: block;
+        padding: 12px 20px;
+        color: var(--text-secondary);
+        border-left: 3px solid transparent;
         font-size: 14px;
-        line-height: 36px;
-        background-color: #f0f0f0;
-        border-bottom: #ddd 1px solid;
+      }
+      .nav-list a:hover,
+      .nav-list a.active {
+        background-color: #f0f9eb;
+        color: var(--primary-color);
+        border-left-color: var(--primary-color);
+      }
+
+      /* --- 主内容区 --- */
+      .main-content {
+        flex: 1;
+        min-width: 0; /* 防止代码块撑破布局 */
+      }
+
+      .section-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+      }
+
+      .section-title {
+        font-size: 20px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+      }
+      .section-title::before {
+        content: "";
+        display: inline-block;
+        width: 4px;
+        height: 20px;
+        background: var(--primary-color);
+        margin-right: 10px;
+        border-radius: 2px;
+      }
+
+      /* --- 代码块样式 --- */
+      .command-group {
+        margin-bottom: 20px;
+      }
+      .command-label {
+        font-size: 14px;
+        font-weight: bold;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+        display: block;
+      }
+      .command-label .info {
+        font-weight: normal;
+        font-size: 12px;
+        color: #999;
+        margin-left: 5px;
+      }
+
+      .code-box {
+        background: var(--code-bg);
+        border-radius: 6px;
+        position: relative;
+        margin-bottom: 15px;
+        border: 1px solid #1f1f1f;
+      }
+
+      .code-box pre {
+        color: #f8f8f2;
+        font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+        font-size: 13px;
+        padding: 15px;
+        padding-right: 50px; /* 留出复制按钮位置 */
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-all;
+        overflow-x: auto;
+      }
+
+      .copy-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ccc;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        user-select: none;
+      }
+
+      .copy-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+      }
+      .copy-btn.copied {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+      }
+
+      /* --- ASCII 面板菜单模拟 --- */
+      .ascii-menu {
+        color: #a6e22e;
+        font-weight: bold;
+      }
+      .ascii-highlight {
+        color: #f92672;
+        font-weight: bold;
+      }
+
+      /* --- 底部 --- */
+      .footer {
+        text-align: center;
+        padding: 30px 0;
+        color: #999;
+        font-size: 13px;
+        border-top: 1px solid #e1e4e8;
+        margin-top: 30px;
+      }
+      .footer a {
+        color: #666;
+        margin: 0 5px;
+      }
+
+      /* --- 响应式适配 --- */
+      @media (max-width: 768px) {
+        .container {
+          flex-direction: column;
+          padding: 10px;
+        }
+        .sidebar {
+          width: 100%;
+          z-index: 100;
+        }
+        .nav-card {
+          position: static;
+          margin-bottom: 10px;
+        }
+        /* 移动端折叠菜单逻辑可在此扩展，简单处理为列表展示 */
+        .nav-list {
+          display: flex;
+          flex-wrap: wrap;
+        }
+        .nav-list li {
+          flex: 1 0 50%;
+        }
+        .nav-list a {
+          border-left: none;
+          border-bottom: 2px solid transparent;
+          text-align: center;
+          padding: 10px 5px;
+        }
+        .nav-list a:hover,
+        .nav-list a.active {
+          background: transparent;
+          border-bottom-color: var(--primary-color);
+        }
       }
     </style>
   </head>
-
   <body>
-    <div class="down-main">
-      <div class="d4" id="instal-windows" style="background-color: #edf6ef">
-        <div class="wrap">
-          <div class="wrap-title">
-            <div class="text">宝塔命令大全</div>
-          </div>
-          <div class="code-title">
-            <h3>目录</h3>
-            <div class="code-list">
-              <ul>
-                <li>
-                  <a href="/btcode/#install">安装宝塔</a>
-                </li>
-                <li>
-                  <a href="/btcode/#main">管理宝塔</a>
-                </li>
-                <li>
-                  <a href="/btcode/#nginx">Nginx服务管理</a>
-                </li>
-                <li>
-                  <a href="/btcode/#apache">Apache服务管理</a>
-                </li>
-                <li>
-                  <a href="/btcode/#mysql">MySQL服务管理</a>
-                </li>
-                <li>
-                  <a href="/btcode/#ftp">FTP服务管理</a>
-                </li>
-                <li>
-                  <a href="/btcode/#php">PHP服务管理</a>
-                </li>
-                <li>
-                  <a href="/btcode/#redis">Redis服务管理</a>
-                </li>
-                <li>
-                  <a href="/btcode/#memcached">Memcached服务管理</a>
-                </li>
-              </ul>
+    <div class="container">
+      <!-- 左侧导航 -->
+      <aside class="sidebar">
+        <div class="nav-card">
+          <div class="nav-header">目录导航</div>
+          <ul class="nav-list">
+            <li><a href="#install" class="active">安装宝塔</a></li>
+            <li><a href="#main">管理宝塔 (CLI)</a></li>
+            <li><a href="#nginx">Nginx 服务</a></li>
+            <li><a href="#apache">Apache 服务</a></li>
+            <li><a href="#mysql">MySQL 服务</a></li>
+            <li><a href="#ftp">FTP 服务</a></li>
+            <li><a href="#php">PHP 服务</a></li>
+            <li><a href="#redis">Redis 服务</a></li>
+            <li><a href="#memcached">Memcached 服务</a></li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- 右侧内容 -->
+      <main class="main-content">
+        <!-- 安装宝塔 -->
+        <section id="install" class="section-card">
+          <h2 class="section-title">安装宝塔</h2>
+
+          <div class="command-group">
+            <span class="command-label">Centos 安装脚本</span>
+            <div class="code-box">
+              <pre>
+yum install -y wget && wget -O install.sh http://download.bt.cn/install/install_6.0.sh && sh install.sh</pre
+              >
+              <button class="copy-btn">复制</button>
             </div>
           </div>
-          <div class="desc">
-            <a name="install" href="/download">
-              <h2 class="th2">安装宝塔</h2></a
+
+          <div class="command-group">
+            <span class="command-label">Ubuntu/Deepin 安装脚本</span>
+            <div class="code-box">
+              <pre>
+wget -O install.sh http://download.bt.cn/install/install_6.0.sh && bash install.sh</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+          </div>
+
+          <div class="command-group">
+            <span class="command-label">一键更新脚本</span>
+            <div class="code-box">
+              <pre>curl http://download.bt.cn/install/update6.sh|bash</pre>
+              <button class="copy-btn">复制</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 管理宝塔 -->
+        <section id="main" class="section-card">
+          <h2 class="section-title">管理宝塔 (CLI命令)</h2>
+
+          <div class="command-group">
+            <span class="command-label"
+              >宝塔面板命令行工具
+              <span class="info">(输入 bt 回车即可调出菜单)</span></span
             >
-            <div class="btcode">
-              <span>Centos安装脚本</span>
-              <pre class="installcode">
-yum install -y wget &amp;&amp; wget -O install.sh {$siteurl}/install/install_6.0.sh &amp;&amp; sh install.sh</pre
-              >
-              <span>Ubuntu/Deepin安装脚本</span>
-              <pre class="installcode">
-wget -O install.sh {$siteurl}/install/install_6.0.sh &amp;&amp; bash install.sh</pre
-              >
-              <span>一键更新脚本</span>
-              <pre class="installcode">
-curl {$siteurl}/install/update6.sh|bash</pre
-              >
-            </div>
-            <a name="main" href="/btcode/#main">
-              <h2 class="th2" id="reset-password">管理宝塔</h2>
-            </a>
-            <div class="btcode">
-              <span
-                >宝塔工具箱/找回密码/修改密码<span class="info"
-                  >(包含下列绝大部分功能，直接ssh中执行bt命令，按回车下一步。仅限6.x以上版本面板)</span
-                ></span
-              >
+            <div class="code-box">
               <pre>bt</pre>
-              <pre><p>
-===============宝塔面板命令行==================
-(1) 重启面板服务            (8) 改面板端口
-(2) 停止面板服务            (9) 清除面板缓存
-(3) 启动面板服务            (10) 清除登录限制
-(4) 重载面板服务            (11) 设置是否开启IP + User-Agent验证
-<b style="color:red"><u>(5) 修改面板密码</u></b>            (12) 取消域名绑定限制
-(6) 修改面板用户名          (13) 取消IP访问限制
-(7) 强制修改MySQL密码       <b>(14) 查看面板默认信息</b>
-(22) 显示面板错误日志        (15) 清理系统垃圾
-(23) 关闭BasicAuth认证      (16) 修复面板(检查错误并更新面板文件到最新版)
-(24) 关闭动态口令认证        (17) 设置日志切割是否压缩
-(25) 设置是否保存文件历史副本 (18) 设置是否自动备份面板
-(26) 关闭面板ssl            (28) 修改面板安全入口
-(0) 取消                   (29) 取消访问设备验证
-===============================================
+              <button class="copy-btn">复制</button>
+            </div>
+            <div class="code-box">
+              <pre>
+==================================宝塔面板命令行====================================
+(1) 重启面板服务                  (8) 改面板端口                                   |
+(2) 停止面板服务                  (9) 清除面板缓存                                 |
+(3) 启动面板服务                  (10) 清除登录限制                                |
+(4) 重载面板服务                  (11) 设置是否开启IP + User-Agent验证             |
+<span class="ascii-highlight">(5) 修改面板密码</span>                  (12) 取消域名绑定限制                            |
+(6) 修改面板用户名                (13) 取消IP访问限制                              |
+(7) 强制修改MySQL密码             <span class="ascii-menu">(14) 查看面板默认信息</span>                            |
+(22) 显示面板错误日志             (15) 清理系统垃圾                                |
+(23) 关闭BasicAuth认证            (16) 修复面板(安装当前版本的最新bug修复包)       |
+(24) 关闭动态口令认证             (17) 设置日志切割是否压缩                        |
+(25) 设置是否保存文件历史副本     (18) 设置是否自动备份面板                        |
+(26) 关闭面板ssl                  (19) 关闭面板登录地区限制                        |
+(28) 修改面板安全入口             (29) 取消访问设备验证                            |
+(30) 取消访问UA验证               (32) 开启/关闭【80、443】端口访问面板            |
+(34) 更新面板(更新到最新版本)                                                      |
+(0) 取消                                                                           |
+====================================================================================
 请输入命令编号：
-按回车键下一步
-	</p><p></p></pre>
-              <span>停止</span>
-              <pre>/etc/init.d/bt stop</pre>
-              <span>启动</span>
-              <pre>/etc/init.d/bt start</pre>
-              <span>重启</span>
-              <pre>/etc/init.d/bt restart</pre>
-              <span>卸载</span>
-              <pre>
-/etc/init.d/bt stop &amp;&amp; chkconfig --del bt &amp;&amp; rm -f /etc/init.d/bt &amp;&amp; rm -rf /www/server/panel</pre
-              >
-              <span>查看当前面板端口</span>
-              <pre>cat /www/server/panel/data/port.pl</pre>
-              <span>修改面板端口，如要改成8881（centos 6 系统）</span>
-              <pre>
-echo '8881' &gt; /www/server/panel/data/port.pl &amp;&amp; /etc/init.d/bt restart
-iptables -I INPUT -p tcp -m state --state NEW -m tcp --dport 8881 -j ACCEPT
-service iptables save
-service iptables restart</pre
-              >
-              <span>修改面板端口，如要改成8881（centos 7 系统）</span>
-              <pre>
-echo '8881' &gt; /www/server/panel/data/port.pl &amp;&amp; /etc/init.d/bt restart
-firewall-cmd --permanent --zone=public --add-port=8881/tcp
-firewall-cmd --reload</pre
-              >
-              <span>强制修改MySQL管理(root)密码，如要改成123456</span>
-              <pre>
-cd /www/server/panel &amp;&amp; python tools.py root 123456</pre
-              >
-              <span>修改面板密码，如要改成123456</span>
-              <pre>
-cd /www/server/panel &amp;&amp; python tools.py panel 123456</pre
-              >
-              <span>查看宝塔日志</span>
-              <pre>cat /tmp/panelBoot.pl</pre>
-              <span>查看软件安装日志</span>
-              <pre>cat /tmp/panelExec.log</pre>
-              <span>站点配置文件位置</span>
-              <pre>/www/server/panel/vhost</pre>
-              <span>删除域名绑定面板</span>
-              <pre>rm -f /www/server/panel/data/domain.conf</pre>
-              <span>清理登陆限制</span>
-              <pre>rm -f /www/server/panel/data/*.login</pre>
-              <span>查看面板授权IP</span>
-              <pre>cat /www/server/panel/data/limitip.conf</pre>
-              <span>关闭访问限制</span>
-              <pre>rm -f /www/server/panel/data/limitip.conf</pre>
-              <span>查看许可域名</span>
-              <pre>cat /www/server/panel/data/domain.conf</pre>
-              <span>关闭面板SSL</span>
-              <pre>
-rm -f /www/server/panel/data/ssl.pl &amp;&amp; /etc/init.d/bt restart</pre
-              >
-              <span>查看面板错误日志</span>
-              <pre>cat /tmp/panelBoot</pre>
-              <span>查看数据库错误日志</span>
-              <pre>cat /www/server/data/*.err</pre>
-              <span>站点配置文件目录(nginx)</span>
-              <pre>/www/server/panel/vhost/nginx</pre>
-              <span>站点配置文件目录(apache)</span>
-              <pre>/www/server/panel/vhost/apache</pre>
-              <span>站点默认目录</span>
-              <pre>/www/wwwroot</pre>
-              <span>数据库备份目录</span>
-              <pre>/www/backup/database</pre>
-              <span>站点备份目录</span>
-              <pre>/www/backup/site</pre>
-              <span>站点日志</span>
-              <pre>/www/wwwlogs</pre>
+</pre>
             </div>
-            <a name="nginx" href="/btcode/#nginx">
-              <h2 class="th2">Nginx服务管理</h2>
-            </a>
-            <div class="btcode">
-              <span>nginx安装目录</span>
-              <pre>/www/server/nginx</pre>
-              <span>启动</span>
-              <pre>/etc/init.d/nginx start</pre>
-              <span>停止</span>
-              <pre>/etc/init.d/nginx stop</pre>
-              <span>重启</span>
-              <pre>/etc/init.d/nginx restart</pre>
-              <span>启载</span>
-              <pre>/etc/init.d/nginx reload</pre>
-              <span>nginx配置文件</span>
-              <pre>/www/server/nginx/conf/nginx.conf</pre>
-            </div>
-            <a name="apache" href="/btcode/#apache">
-              <h2 class="th2">Apache服务管理</h2>
-            </a>
-            <div class="btcode">
-              <span>apache安装目录</span>
-              <pre>/www/server/httpd</pre>
-              <span>启动</span>
-              <pre>/etc/init.d/httpd start</pre>
-              <span>停止</span>
-              <pre>/etc/init.d/httpd stop</pre>
-              <span>重启</span>
-              <pre>/etc/init.d/httpd restart</pre>
-              <span>启载</span>
-              <pre>/etc/init.d/httpd reload</pre>
-              <span>apache配置文件</span>
-              <pre>/www/server/apache/conf/httpd.conf</pre>
-            </div>
-            <a name="mysql" href="/btcode/#mysql">
-              <h2 class="th2">MySQL服务管理</h2>
-            </a>
-            <div class="btcode">
-              <span>mysql安装目录</span>
-              <pre>/www/server/mysql</pre>
-              <span>phpmyadmin安装目录</span>
-              <pre>/www/server/phpmyadmin</pre>
-              <span>数据存储目录</span>
-              <pre>/www/server/data</pre>
-              <span>启动</span>
-              <pre>/etc/init.d/mysqld start</pre>
-              <span>停止</span>
-              <pre>/etc/init.d/mysqld stop</pre>
-              <span>重启</span>
-              <pre>/etc/init.d/mysqld restart</pre>
-              <span>启载</span>
-              <pre>/etc/init.d/mysqld reload</pre>
-              <span>mysql配置文件</span>
-              <pre>/etc/my.cnf</pre>
-            </div>
-            <a name="ftp" href="/btcode/#ftp">
-              <h2 class="th2">FTP服务管理</h2>
-            </a>
-            <div class="btcode">
-              <span>ftp安装目录</span>
-              <pre>/www/server/pure-ftpd</pre>
-              <span>启动</span>
-              <pre>/etc/init.d/pure-ftpd start</pre>
-              <span>停止</span>
-              <pre>/etc/init.d/pure-ftpd stop</pre>
-              <span>重启</span>
-              <pre>/etc/init.d/pure-ftpd restart</pre>
-              <span>ftp配置文件</span>
-              <pre>/www/server/pure-ftpd/etc/pure-ftpd.conf</pre>
-            </div>
-            <a name="php" href="/btcode/#php">
-              <h2 class="th2">PHP服务管理</h2>
-            </a>
-            <div class="btcode">
-              <span>php安装目录</span>
-              <pre>/www/server/php</pre>
-              <span>启动</span
-              ><span class="info"
-                >(请根据安装PHP版本号做更改，例如：/etc/init.d/php-fpm-54
-                start)</span
-              >
+          </div>
+
+          <div class="command-group">
+            <span class="command-label">常用管理命令</span>
+            <!-- 分组多个小命令 -->
+            <span
+              class="command-label"
+              style="margin-top: 10px; font-size: 12px"
+              >停止/启动/重启/卸载</span
+            >
+            <div class="code-box">
               <pre>
-/etc/init.d/php-fpm-{52|53|54|55|56|70|71|72|73|74} start</pre
+/etc/init.d/bt stop    # 停止
+/etc/init.d/bt start   # 启动
+/etc/init.d/bt restart # 重启</pre
               >
-              <span>停止</span
-              ><span class="info"
-                >(请根据安装PHP版本号做更改，例如：/etc/init.d/php-fpm-54
-                stop)</span
-              >
-              <pre>
-/etc/init.d/php-fpm-{52|53|54|55|56|70|71|72|73|74} stop</pre
-              >
-              <span>重启</span
-              ><span class="info"
-                >(请根据安装PHP版本号做更改，例如：/etc/init.d/php-fpm-54
-                restart)</span
-              >
-              <pre>
-/etc/init.d/php-fpm-{52|53|54|55|56|70|71|72|73|74} restart</pre
-              >
-              <span>启载</span
-              ><span class="info"
-                >(请根据安装PHP版本号做更改，例如：/etc/init.d/php-fpm-54
-                reload)</span
-              >
-              <pre>
-/etc/init.d/php-fpm-{52|53|54|55|56|70|71|72|73|74} reload</pre
-              >
-              <span>配置文件</span
-              ><span class="info"
-                >(请根据安装PHP版本号做更改，例如：/www/server/php/52/etc/php.ini)</span
-              >
-              <pre>
-/www/server/php/{52|53|54|55|56|70|71|72|73|74}/etc/php.ini</pre
-              >
+              <button class="copy-btn">复制</button>
             </div>
-            <a name="redis" href="/btcode/#redis">
-              <h2 class="th2">Redis服务管理</h2>
-            </a>
-            <div class="btcode">
-              <span>redis安装目录</span>
-              <pre>/www/server/redis</pre>
-              <span>启动</span>
-              <pre>/etc/init.d/redis start</pre>
-              <span>停止</span>
-              <pre>/etc/init.d/redis stop</pre>
-              <span>redis配置文件</span>
+
+            <span
+              class="command-label"
+              style="margin-top: 10px; font-size: 12px"
+              >查看面板默认信息（地址、账号、密码）</span
+            >
+            <div class="code-box">
+              <pre>/etc/init.d/bt default</pre>
+              <button class="copy-btn">复制</button>
+            </div>
+
+            <span
+              class="command-label"
+              style="margin-top: 10px; font-size: 12px"
+              >修改面板端口 (例：改为8881)</span
+            >
+            <div class="code-box">
+              <pre>
+echo '8881' > /www/server/panel/data/port.pl && /etc/init.d/bt restart</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+
+            <span
+              class="command-label"
+              style="margin-top: 10px; font-size: 12px"
+              >修改面板密码 (例：改为123456)</span
+            >
+            <div class="code-box">
+              <pre>cd /www/server/panel && python tools.py panel 123456</pre>
+              <button class="copy-btn">复制</button>
+            </div>
+
+            <span
+              class="command-label"
+              style="margin-top: 10px; font-size: 12px"
+              >消除登录限制/域名绑定/SSL</span
+            >
+            <div class="code-box">
+              <pre>
+rm -f /www/server/panel/data/*.login        # 清理登录限制
+rm -f /www/server/panel/data/domain.conf    # 解除域名绑定
+rm -f /www/server/panel/data/ssl.pl && /etc/init.d/bt restart # 关闭面板SSL</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Nginx -->
+        <section id="nginx" class="section-card">
+          <h2 class="section-title">Nginx 服务管理</h2>
+          <div class="command-group">
+            <span class="command-label">基本操作</span>
+            <div class="code-box">
+              <pre>
+/etc/init.d/nginx start   # 启动
+/etc/init.d/nginx stop    # 停止
+/etc/init.d/nginx restart # 重启
+/etc/init.d/nginx reload  # 重载配置</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+            <span class="command-label">关键路径</span>
+            <div class="code-box">
+              <pre>
+安装目录：/www/server/nginx
+配置文件：/www/server/nginx/conf/nginx.conf
+站点配置：/www/server/panel/vhost/nginx</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Apache -->
+        <section id="apache" class="section-card">
+          <h2 class="section-title">Apache 服务管理</h2>
+          <div class="command-group">
+            <span class="command-label">基本操作</span>
+            <div class="code-box">
+              <pre>
+/etc/init.d/httpd start   # 启动
+/etc/init.d/httpd stop    # 停止
+/etc/init.d/httpd restart # 重启
+/etc/init.d/httpd reload  # 重载配置</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+            <span class="command-label">关键路径</span>
+            <div class="code-box">
+              <pre>
+安装目录：/www/server/httpd
+配置文件：/www/server/apache/conf/httpd.conf</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- MySQL -->
+        <section id="mysql" class="section-card">
+          <h2 class="section-title">MySQL 服务管理</h2>
+          <div class="command-group">
+            <span class="command-label">基本操作</span>
+            <div class="code-box">
+              <pre>
+/etc/init.d/mysqld start   # 启动
+/etc/init.d/mysqld stop    # 停止
+/etc/init.d/mysqld restart # 重启
+/etc/init.d/mysqld reload  # 重载</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+            <span class="command-label">关键路径</span>
+            <div class="code-box">
+              <pre>
+安装目录：/www/server/mysql
+数据库文件：/www/server/data
+配置文件：/etc/my.cnf</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- FTP -->
+        <section id="ftp" class="section-card">
+          <h2 class="section-title">FTP 服务管理 (Pure-Ftpd)</h2>
+          <div class="command-group">
+            <span class="command-label">基本操作</span>
+            <div class="code-box">
+              <pre>
+/etc/init.d/pure-ftpd start   # 启动
+/etc/init.d/pure-ftpd stop    # 停止
+/etc/init.d/pure-ftpd restart # 重启</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+            <span class="command-label">关键路径</span>
+            <div class="code-box">
+              <pre>
+安装目录：/www/server/pure-ftpd
+配置文件：/www/server/pure-ftpd/etc/pure-ftpd.conf</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- PHP -->
+        <section id="php" class="section-card">
+          <h2 class="section-title">PHP 服务管理</h2>
+          <div class="command-group">
+            <span class="command-label"
+              >通用命令格式
+              <span class="info"
+                >(需将 {version} 替换为具体版本，如 56, 72, 74, 80)</span
+              ></span
+            >
+            <div class="code-box">
+              <pre>
+# 启动
+/etc/init.d/php-fpm-{version} start
+
+# 停止
+/etc/init.d/php-fpm-{version} stop
+
+# 重启
+/etc/init.d/php-fpm-{version} restart
+
+# 重载配置
+/etc/init.d/php-fpm-{version} reload</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+            <span class="command-label">配置文件路径示例 (version=74)</span>
+            <div class="code-box">
+              <pre>/www/server/php/74/etc/php.ini</pre>
+              <button class="copy-btn">复制</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Redis -->
+        <section id="redis" class="section-card">
+          <h2 class="section-title">Redis 服务管理</h2>
+          <div class="command-group">
+            <div class="code-box">
+              <pre>
+/etc/init.d/redis start   # 启动
+/etc/init.d/redis stop    # 停止</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+            <span class="command-label">配置文件</span>
+            <div class="code-box">
               <pre>/www/server/redis/redis.conf</pre>
-            </div>
-            <a name="memcached" href="/btcode/#memcached">
-              <h2 class="th2">Memcached服务管理</h2>
-            </a>
-            <div class="btcode">
-              <span>memcached安装目录</span>
-              <pre>/usr/local/memcached</pre>
-              <span>启动</span>
-              <pre>/etc/init.d/memcached start</pre>
-              <span>停止</span>
-              <pre>/etc/init.d/memcached stop</pre>
-              <span>重启</span>
-              <pre>/etc/init.d/memcached restart</pre>
-              <span>启载</span>
-              <pre>/etc/init.d/memcached reload</pre>
+              <button class="copy-btn">复制</button>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+
+        <!-- Memcached -->
+        <section id="memcached" class="section-card">
+          <h2 class="section-title">Memcached 服务管理</h2>
+          <div class="command-group">
+            <div class="code-box">
+              <pre>
+/etc/init.d/memcached start   # 启动
+/etc/init.d/memcached stop    # 停止
+/etc/init.d/memcached restart # 重启</pre
+              >
+              <button class="copy-btn">复制</button>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
 
-    <div class="foot">
+    <footer class="footer">
       <div class="wrap">
-        <div class="fb textcenter">
-          <div class="fb1 textcenter">
-            <a
-              href="http://www.bt.cn/new/agreement_open.html"
-              target="_blank"
-              rel="noreferrer"
-              >《开源许可协议》</a
-            >
-            <i>丨</i>
-            <a
-              href="http://www.bt.cn/new/agreement_user.html"
-              target="_blank"
-              rel="noreferrer"
-              >《用户协议》</a
-            >
-            <i>丨</i>
-            <a
-              href="http://www.bt.cn/new/agreement_privacy.html"
-              target="_blank"
-              rel="noreferrer"
-              >《隐私声明》</a
-            >
-          </div>
-          <div class="fb2 mt_15">
-            <p>Copyright © {:date('Y')} 宝塔面板安装脚本</p>
-          </div>
+        <div>
+          <a href="#" target="_blank">开源许可协议</a>丨
+          <a href="#" target="_blank">用户协议</a>丨
+          <a href="#" target="_blank">隐私声明</a>
         </div>
+        <p style="margin-top: 10px">
+          Copyright © <span id="year-display"></span> 宝塔面板安装脚本
+        </p>
       </div>
-    </div>
+    </footer>
 
-    <script
-      src="{$cdnpublic}jquery/3.6.0/jquery.min.js"
-      type="text/javascript"
-      charset="utf-8"
-    ></script>
-    <script
-      src="{$cdnpublic}layer/3.5.1/layer.js"
-      type="text/javascript"
-      charset="utf-8"
-    ></script>
-
-    <script
-      type="text/javascript"
-      src="{$cdnpublic}clipboard.js/1.7.1/clipboard.min.js"
-    ></script>
-    <script type="text/javascript" src="/static/js/dx.js"></script>
     <script>
-      $(function () {
-        var userId = "";
+      document.addEventListener("DOMContentLoaded", function () {
+        // 1. 自动设置年份
+        document.getElementById("year-display").textContent =
+          new Date().getFullYear();
 
-        // 复制安装命令
-        var clipboard = new Clipboard(".ico-copy", {
-          text: function (element) {
-            return $(element).prev().text();
-          },
+        // 2. 复制功能实现 (原生 JS 替代 Clipboard.js)
+        const copyBtns = document.querySelectorAll(".copy-btn");
+
+        copyBtns.forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const code = this.previousElementSibling.innerText;
+
+            // 创建临时文本域
+            const textArea = document.createElement("textarea");
+            textArea.value = code;
+            document.body.appendChild(textArea);
+            textArea.select();
+
+            try {
+              document.execCommand("copy");
+              // 成功反馈
+              const originalText = this.innerText;
+              this.innerText = "已复制";
+              this.classList.add("copied");
+
+              setTimeout(() => {
+                this.innerText = originalText;
+                this.classList.remove("copied");
+              }, 2000);
+            } catch (err) {
+              alert("复制失败，请手动复制");
+            }
+
+            document.body.removeChild(textArea);
+          });
         });
-        clipboard
-          .on("success", function (e) {
-            layer.msg(e.trigger.title + "成功", { icon: 1 });
-          })
-          .on("error", function (e) {
-            layer.msg("复制失败，请手动选中文本Ctrl+c复制内容", { icon: 2 });
+
+        // 3. 导航高亮与平滑滚动
+        const navLinks = document.querySelectorAll(".nav-list a");
+        const sections = document.querySelectorAll("section");
+
+        // 点击平滑滚动
+        navLinks.forEach((link) => {
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute("href");
+            const targetSection = document.querySelector(targetId);
+
+            if (targetSection) {
+              // 考虑到顶部 sticky 导航可能存在的遮挡 (如果有的话，现在没有，但留出余量)
+              const offsetTop = targetSection.offsetTop - 20;
+              window.scrollTo({
+                top: offsetTop,
+                behavior: "smooth",
+              });
+
+              // 手动设置高亮
+              navLinks.forEach((n) => n.classList.remove("active"));
+              this.classList.add("active");
+            }
+          });
+        });
+
+        // 滚动监听以自动更新导航高亮
+        window.addEventListener("scroll", function () {
+          let current = "";
+          sections.forEach((section) => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            // 当滚动到区块的 1/3 处时切换激活状态
+            if (scrollY >= sectionTop - 150) {
+              current = section.getAttribute("id");
+            }
           });
 
-        $(".install-code .command").click(function () {
-          $(this).next(".ico-copy").click();
+          navLinks.forEach((link) => {
+            link.classList.remove("active");
+            if (link.getAttribute("href").includes(current)) {
+              link.classList.add("active");
+            }
+          });
         });
-
-        $("#goInstallLinux").click(function () {
-          scrollTop("#instal-linux");
-        });
-
-        $("#goInstallWindows").click(function () {
-          scrollTop("#instal-windows");
-        });
-
-        $("#goInstallCloud").click(function () {
-          scrollTop("#instal-cloud");
-        });
-
-        $("#goInstallMonitor").click(function () {
-          scrollTop("#instal-monitor");
-        });
-
-        function GetRequest() {
-          var url = location.search;
-          //获取url中"?"符后的字串
-          var theRequest = new Object();
-          if (url.indexOf("?") != -1) {
-            var str = url.substr(1);
-          }
-          return str;
-        }
-        if (GetRequest() == "bt") {
-          scrollTop("#instal-linux");
-        }
-
-        // 滚动到指定位置
-        function scrollTop(el) {
-          var headHeight = 0;
-          $("html, body").animate(
-            { scrollTop: $(el).offset().top - headHeight },
-            { duration: 200, easing: "swing" }
-          );
-        }
       });
     </script>
   </body>
