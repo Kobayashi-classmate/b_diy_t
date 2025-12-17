@@ -13,7 +13,7 @@ use yzh52521\Hashing\Hash;
 
 class Admin extends BaseController
 {
-    public function verifycode()
+    public function verifycode($id = '')
     {
         return captcha($id);
     }
@@ -511,3 +511,4 @@ class Admin extends BaseController
         return json(['msg' => '数据更新成功', 'data' => $decryptData, 'status' => true, 'code' => 0]);
     }
 }
+
