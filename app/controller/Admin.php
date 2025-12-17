@@ -31,7 +31,7 @@ class Admin extends BaseController
 
             $username = input('post.username', null, 'trim');
             $password = input('post.password', null, 'trim');
-            $captcha = input('post.captcha', null, 'trim');
+            $code = input('post.captcha', null, 'trim');
 
             if (empty($username) || empty($password)) {
                 return json(['code' => -1, 'msg' => '用户名或密码不能为空']);
@@ -511,4 +511,5 @@ class Admin extends BaseController
         return json(['msg' => '数据更新成功', 'data' => $decryptData, 'status' => true, 'code' => 0]);
     }
 }
+
 
